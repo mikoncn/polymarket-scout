@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>🎯 Polymarket Scout - 配置中心</title>
-    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="/static/style.css" />
   </head>
   <body>
     <div class="container">
@@ -56,14 +56,15 @@
 
               <div class="form-group">
                 <label for="tag">品类标签</label>
-                <select id="tag">
+                <input 
+                  type="text" 
+                  id="tag" 
+                  list="tagList" 
+                  placeholder="输入搜索或选择品类（留空=全局扫描）"
+                />
+                <datalist id="tagList">
                   <option value="">全局扫描</option>
-                  <option value="Sports">Sports（体育）</option>
-                  <option value="Crypto">Crypto（加密货币）</option>
-                  <option value="Politics">Politics（政治）</option>
-                  <option value="Business">Business（商业）</option>
-                  <option value="Pop Culture">Pop Culture（流行文化）</option>
-                </select>
+                </datalist>
                 <span class="hint">定向侦察特定品类</span>
               </div>
             </div>
@@ -164,6 +165,6 @@
     <!-- 通知提示 -->
     <div id="notification" class="notification hidden"></div>
 
-    <script src="app.js"></script>
+    <script src="/static/app.js"></script>
   </body>
 </html>

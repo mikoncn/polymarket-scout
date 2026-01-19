@@ -26,10 +26,32 @@ const elements = {
   notification: document.getElementById("notification"),
 };
 
-// 页面加载时获取当前配置
+// 页面加载时获取当前配置和标签列表
 window.addEventListener("DOMContentLoaded", async () => {
+  await loadTags();
   await loadConfig();
 });
+
+// 加载品类标签列表
+async function loadTags() {
+  try {
+    const response = await fetch(`${API_BASE}/api/tags`);
+    const tags = await response.json();
+    
+    // 获取 datalist 元素
+    const tagDatalist = document.getElementById("tagList");
+    
+    // 添加所有标签到 datalist
+    tags.forEach(tag => {
+      const option = document.createElement("option");
+      option.value = tag.label;
+      tagDatalist.appendChild(option);
+    });
+  } catch (error) {
+    console.error("标签加载失败:", error);
+    // 静默失败，使用默认的空列表
+  }
+}
 
 // 加载配置
 async function loadConfig() {

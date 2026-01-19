@@ -3,7 +3,7 @@ import os
 import subprocess
 from dotenv import load_dotenv, set_key, dotenv_values
 
-app = Flask(__name__, static_folder='static', template_folder='static')
+app = Flask(__name__, static_folder='static')
 
 ENV_FILE = '.env'
 
