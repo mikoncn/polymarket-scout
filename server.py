@@ -73,6 +73,28 @@ def run_scout():
     except Exception as e:
         return jsonify({'success': False, 'message': f'执行失败: {str(e)}'}), 500
 
+@app.route('/api/tags', methods=['GET'])
+def get_tags():
+    """获取所有可用的品类标签"""
+    try:
+        import requests
+        response = requests.get('https://gamma-api.polymarket.com/tags?limit=5000', timeout=10)
+        tags = response.json()
+        
+        # 过滤和排序标签
+        filtered_tags = [
+            {'id': t.get('id'), 'label': t.get('label')}
+            for t in tags
+            if t.get('label') and len(t.get('label', '')) < 30
+        ]
+        
+        # 按字母排序
+        filtered_tags.sort(key=lambda x: x['label'].lower())
+        
+        return jsonify(filtered_tags)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 if __name__ == '__main__':
     print("🎯 Polymarket Scout Web 界面启动中...")
     print("📡 访问地址: http://localhost:5000")
