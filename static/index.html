@@ -22,6 +22,17 @@
         <section class="config-panel">
           <h2>⚙️ 侦察配置</h2>
 
+          <!-- 方案预设管理 -->
+          <div class="preset-bar">
+            <div class="preset-control">
+              <label for="presetSelect">📋 战术方案:</label>
+              <select id="presetSelect">
+                <option value="">-- 选择预设方案 --</option>
+              </select>
+            </div>
+            <button id="savePresetBtn" class="btn btn-sm btn-outline">💾 另存为新方案</button>
+          </div>
+
           <!-- 核心筛选规则 -->
           <div class="config-section">
             <h3>核心筛选规则</h3>
@@ -98,6 +109,16 @@
                   placeholder="如: Trump, Bitcoin"
                 />
                 <span class="hint">标题中包含特定词</span>
+              </div>
+
+              <div class="form-group">
+                <label for="exclude">排除关键词 (黑名单)</label>
+                <input
+                  type="text"
+                  id="exclude"
+                  placeholder="如: GTA, News (逗号分隔)"
+                />
+                <span class="hint">标题含任一词则屏蔽</span>
               </div>
 
               <div class="form-group">

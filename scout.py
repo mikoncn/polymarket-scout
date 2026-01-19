@@ -28,6 +28,7 @@ SCOUT_TAG_NAME = os.getenv("SCOUT_TAG", "").strip()
 MIN_LIQUIDITY = float(os.getenv("SCOUT_MIN_LIQUIDITY", 0) or 0)
 MAX_DAYS_TO_END = int(os.getenv("SCOUT_MAX_DAYS_TO_END", 0) or 0)
 SEARCH_KEYWORD = os.getenv("SCOUT_SEARCH", "").strip()
+EXCLUDE_KEYWORDS = [k.strip().lower() for k in os.getenv("SCOUT_EXCLUDE_KEYWORDS", "").split(',') if k.strip()]
 ORDER_BY = os.getenv("SCOUT_ORDER_BY", "volume").strip().lower()
 
 def get_tag_id(tag_name):
@@ -146,6 +147,16 @@ def scout():
                 # 3. 关键词搜索过滤
                 if SEARCH_KEYWORD and SEARCH_KEYWORD.lower() not in str(title).lower():
                     continue
+                
+                # 4. 排除关键词黑名单
+                if EXCLUDE_KEYWORDS:
+                    is_excluded = False
+                    for kw in EXCLUDE_KEYWORDS:
+                        if kw in str(title).lower():
+                            is_excluded = True
+                            break
+                    if is_excluded:
+                        continue
 
                 final_data.append({
                     "Title": str(title),

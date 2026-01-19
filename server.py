@@ -24,6 +24,7 @@ def get_config():
         'SCOUT_MIN_LIQUIDITY': os.getenv('SCOUT_MIN_LIQUIDITY', ''),
         'SCOUT_MAX_DAYS_TO_END': os.getenv('SCOUT_MAX_DAYS_TO_END', ''),
         'SCOUT_SEARCH': os.getenv('SCOUT_SEARCH', ''),
+        'SCOUT_EXCLUDE_KEYWORDS': os.getenv('SCOUT_EXCLUDE_KEYWORDS', ''),
         'SCOUT_ORDER_BY': os.getenv('SCOUT_ORDER_BY', 'volume'),
         'SCOUT_FETCH_LIMIT': os.getenv('SCOUT_FETCH_LIMIT', '200'),
         'SCOUT_RUNTIME_LIMIT': os.getenv('SCOUT_RUNTIME_LIMIT', '30'),
@@ -93,7 +94,61 @@ def get_tags():
         
         return jsonify(filtered_tags)
     except Exception as e:
+        return jsonify(filtered_tags)
+    except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+@app.route('/api/presets', methods=['GET'])
+def get_presets():
+    """获取所有预设方案"""
+    try:
+        if not os.path.exists('presets'):
+            os.makedirs('presets')
+        
+        presets = []
+        for f in os.listdir('presets'):
+            if f.endswith('.json'):
+                presets.append(f.replace('.json', ''))
+        return jsonify(presets)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/presets/<name>', methods=['GET'])
+def load_preset(name):
+    """加载指定预设方案"""
+    try:
+        import json
+        file_path = f'presets/{name}.json'
+        if not os.path.exists(file_path):
+            return jsonify({'error': '方案不存在'}), 404
+            
+        with open(file_path, 'r', encoding='utf-8') as f:
+            config = json.load(f)
+        return jsonify(config)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/presets', methods=['POST'])
+def save_preset():
+    """保存预设方案"""
+    try:
+        import json
+        data = request.json
+        name = data.get('name')
+        config = data.get('config')
+        
+        if not name or not config:
+            return jsonify({'success': False, 'message': '参数不完整'}), 400
+            
+        if not os.path.exists('presets'):
+            os.makedirs('presets')
+            
+        with open(f'presets/{name}.json', 'w', encoding='utf-8') as f:
+            json.dump(config, f, indent=2, ensure_ascii=False)
+            
+        return jsonify({'success': True, 'message': '方案已保存'})
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'保存失败: {str(e)}'}), 500
 
 if __name__ == '__main__':
     print("🎯 Polymarket Scout Web 界面启动中...")
