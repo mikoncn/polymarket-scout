@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>🎯 Polymarket Scout - 配置中心</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="container">
+      <!-- 头部 -->
+      <header class="header">
+        <div class="header-content">
+          <h1>🎯 Polymarket Scout</h1>
+          <p class="subtitle">Mikon AI Army 闪电侦察兵 - 配置中心</p>
+        </div>
+      </header>
+
+      <!-- 主内容区 -->
+      <main class="main-content">
+        <!-- 配置面板 -->
+        <section class="config-panel">
+          <h2>⚙️ 侦察配置</h2>
+
+          <!-- 核心筛选规则 -->
+          <div class="config-section">
+            <h3>核心筛选规则</h3>
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="minVolume">最低成交量 (USD)</label>
+                <input type="number" id="minVolume" placeholder="5000" />
+                <span class="hint">过滤低活跃市场</span>
+              </div>
+
+              <div class="form-group">
+                <label for="minProb">最低胜率 (0-1)</label>
+                <input
+                  type="number"
+                  id="minProb"
+                  step="0.01"
+                  placeholder="0.15"
+                />
+                <span class="hint">默认 0.15 (15%)</span>
+              </div>
+
+              <div class="form-group">
+                <label for="maxProb">最高胜率 (0-1)</label>
+                <input
+                  type="number"
+                  id="maxProb"
+                  step="0.01"
+                  placeholder="0.85"
+                />
+                <span class="hint">默认 0.85 (85%)</span>
+              </div>
+
+              <div class="form-group">
+                <label for="tag">品类标签</label>
+                <select id="tag">
+                  <option value="">全局扫描</option>
+                  <option value="Sports">Sports（体育）</option>
+                  <option value="Crypto">Crypto（加密货币）</option>
+                  <option value="Politics">Politics（政治）</option>
+                  <option value="Business">Business（商业）</option>
+                  <option value="Pop Culture">Pop Culture（流行文化）</option>
+                </select>
+                <span class="hint">定向侦察特定品类</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 高级筛选 -->
+          <div class="config-section">
+            <h3>高级筛选（可选）</h3>
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="minLiquidity">最低流动性 (USD)</label>
+                <input
+                  type="number"
+                  id="minLiquidity"
+                  placeholder="留空不限制"
+                />
+                <span class="hint">排除订单簿深度不足的市场</span>
+              </div>
+
+              <div class="form-group">
+                <label for="maxDays">结束日期倒计时（天）</label>
+                <input type="number" id="maxDays" placeholder="留空不限制" />
+                <span class="hint">仅看 X 天内结盘的市场</span>
+              </div>
+
+              <div class="form-group">
+                <label for="search">关键词搜索</label>
+                <input
+                  type="text"
+                  id="search"
+                  placeholder="如: Trump, Bitcoin"
+                />
+                <span class="hint">标题中包含特定词</span>
+              </div>
+
+              <div class="form-group">
+                <label for="orderBy">排序策略</label>
+                <select id="orderBy">
+                  <option value="volume">成交量（Volume）</option>
+                  <option value="liquidity">流动性（Liquidity）</option>
+                  <option value="endDate">即将到期（EndDate）</option>
+                  <option value="prob">胜率极端值（Prob）</option>
+                </select>
+                <span class="hint">结果排序依据</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 运行参数 -->
+          <div class="config-section">
+            <h3>运行参数</h3>
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="fetchLimit">API 抓取上限</label>
+                <input type="number" id="fetchLimit" placeholder="200" />
+                <span class="hint">建议 100-500</span>
+              </div>
+
+              <div class="form-group">
+                <label for="runtimeLimit">运行限时（秒）</label>
+                <input type="number" id="runtimeLimit" placeholder="30" />
+                <span class="hint">脚本最大运行时间</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 操作按钮 -->
+          <div class="action-buttons">
+            <button id="saveBtn" class="btn btn-primary">💾 保存配置</button>
+            <button id="scoutBtn" class="btn btn-success">🚀 启动侦察</button>
+            <button id="resetBtn" class="btn btn-secondary">🔄 重置默认</button>
+          </div>
+        </section>
+
+        <!-- 结果展示区 -->
+        <section class="results-panel">
+          <h2>📊 侦察结果</h2>
+          <div id="resultsContainer" class="results-container">
+            <div class="empty-state">
+              <p>🎯 点击"启动侦察"开始扫描市场</p>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <!-- 底部 -->
+      <footer class="footer">
+        <p>Mikon AI Army - 为 Vibe 而战 🚀</p>
+      </footer>
+    </div>
+
+    <!-- 加载提示 -->
+    <div id="loadingOverlay" class="loading-overlay hidden">
+      <div class="loading-spinner"></div>
+      <p>侦察进行中...</p>
+    </div>
+
+    <!-- 通知提示 -->
+    <div id="notification" class="notification hidden"></div>
+
+    <script src="app.js"></script>
+  </body>
+</html>
