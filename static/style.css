@@ -238,6 +238,18 @@ body {
   background: rgba(0, 0, 0, 0.6);
 }
 
+/* 修复 datalist 下拉箭头在深色模式下的显示 */
+input::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  opacity: 0.6;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+input::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+}
+
 .hint {
   font-size: 0.75rem;
   color: #555;
