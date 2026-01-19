@@ -1,0 +1,13 @@
+{
+  "SCOUT_MIN_VOLUME": "500",
+  "SCOUT_MIN_PROB": "0.01",
+  "SCOUT_MAX_PROB": "0.99",
+  "SCOUT_TAG": "235",
+  "SCOUT_MIN_LIQUIDITY": "100",
+  "SCOUT_MAX_DAYS_TO_END": "",
+  "SCOUT_SEARCH": "Bitcoin, BTC, ETH, Ethereum, Solana, SOL, ETF, Price, Airdrop, Token, Layer, Stablecoin, Crypto",
+  "SCOUT_EXCLUDE_KEYWORDS": "Memecoin, NFT, Ordinals",
+  "SCOUT_ORDER_BY": "volume",
+  "SCOUT_FETCH_LIMIT": "5000",
+  "SCOUT_RUNTIME_LIMIT": "90"
+}

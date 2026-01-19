@@ -94,6 +94,12 @@ body {
   }
 }
 
+.config-column {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem; 
+}
+
 .config-panel {
   background: var(--bg-card);
   backdrop-filter: blur(16px);
@@ -102,8 +108,9 @@ body {
   border-radius: 16px;
   padding: 1.5rem;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-  position: sticky;
-  top: 2rem;
+  /* Remove sticky from panel itself if using column wrapper, or keep it but top calculates differently */
+  /* For simplicity, let the column handle flow. Sticky might be tricky with multiple panels. */
+  /* position: sticky; top: 2rem; */ 
 }
 
 .config-panel h2 {
@@ -466,3 +473,90 @@ input::-webkit-calendar-picker-indicator:hover {
 ::-webkit-scrollbar-thumb:hover {
   background: var(--primary-accent);
 }
+
+/* --- Custom Searchable Dropdown --- */
+.custom-select-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.custom-select-trigger {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.custom-select-trigger input {
+  padding-right: 30px; /* Space for arrow */
+}
+
+.custom-select-trigger .arrow {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.7rem;
+  color: var(--primary-accent);
+  pointer-events: none;
+  transition: transform 0.3s;
+}
+
+.custom-select-wrapper.open .arrow {
+  transform: translateY(-50%) rotate(180deg);
+}
+
+.custom-options {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: rgba(10, 11, 16, 0.95);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--primary-accent);
+  border-top: none;
+  border-radius: 0 0 8px 8px;
+  z-index: 1000;
+  max-height: 250px;
+  overflow-y: auto;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-10px);
+  transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
+}
+
+.custom-select-wrapper.open .custom-options {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(5px);
+}
+
+.custom-options li {
+  padding: 0.7rem 1rem;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  transition: all 0.2s;
+}
+
+.custom-options li:last-child {
+  border-bottom: none;
+}
+
+.custom-options li:hover,
+.custom-options li.selected {
+  background: rgba(0, 240, 255, 0.1);
+  color: #fff;
+  padding-left: 1.2rem; /* Slide effect */
+}
+
+.custom-options li.highlight {
+  background: rgba(0, 240, 255, 0.15); /* Keyboard navigation highlight */
+  color: #fff;
+}
+
+.hidden-option {
+    display: none !important;
+}
+

@@ -15,7 +15,8 @@ def index():
 @app.route('/api/config', methods=['GET'])
 def get_config():
     """获取当前配置"""
-    load_dotenv()
+    # 强制重新加载 .env 文件，覆盖内存中的旧环境变量
+    load_dotenv(override=True)
     config = {
         'SCOUT_MIN_VOLUME': os.getenv('SCOUT_MIN_VOLUME', '5000'),
         'SCOUT_MIN_PROB': os.getenv('SCOUT_MIN_PROB', '0.15'),
@@ -28,6 +29,8 @@ def get_config():
         'SCOUT_ORDER_BY': os.getenv('SCOUT_ORDER_BY', 'volume'),
         'SCOUT_FETCH_LIMIT': os.getenv('SCOUT_FETCH_LIMIT', '200'),
         'SCOUT_RUNTIME_LIMIT': os.getenv('SCOUT_RUNTIME_LIMIT', '30'),
+        'SCOUT_WEBHOOK_URL': os.getenv('SCOUT_WEBHOOK_URL', ''),
+        'SCOUT_AUTO_PRESET': os.getenv('SCOUT_AUTO_PRESET', ''),
     }
     return jsonify(config)
 
@@ -37,9 +40,11 @@ def save_config():
     try:
         config = request.json
         
-        # 更新 .env 文件
+        # 更新 .env 文件并同步到内存环境变量
         for key, value in config.items():
-            set_key(ENV_FILE, key, str(value))
+            str_val = str(value)
+            set_key(ENV_FILE, key, str_val)
+            os.environ[key] = str_val
         
         return jsonify({'success': True, 'message': '配置已保存'})
     except Exception as e:
@@ -49,13 +54,36 @@ def save_config():
 def run_scout():
     """运行侦察脚本"""
     try:
+        # [核心修复] 运行前先删除旧的结果文件
+        if os.path.exists('markets_list.txt'):
+            try:
+                os.remove('markets_list.txt')
+            except Exception as e:
+                print(f"⚠️ 无法删除旧文件: {e}")
+
+        # 1. 准备基础环境
+        env = os.environ.copy()
+        env['PYTHONIOENCODING'] = 'utf-8'
+
+        # 2. 从请求中获取临时配置 (Stateless)
+        # 如果前端传了 config，直接用来覆盖环境变量，不再依赖 global state
+        params = request.json or {}
+        if params:
+            print("🔧 [Server] 接收到临时作战指令，正在覆盖环境变量...")
+            for key, value in params.items():
+                env[key] = str(value)
+                # 打印一下看看收到了什么 (Debug)
+                if key in ['SCOUT_TAG', 'SCOUT_SEARCH', 'SCOUT_MIN_VOLUME']:
+                    print(f"  -> {key}: {value}")
+
         # 运行 scout.py 并捕获输出
         result = subprocess.run(
             ['python', 'scout.py'],
             capture_output=True,
             text=True,
             encoding='utf-8',
-            timeout=60
+            timeout=60,
+            env=env
         )
         
         # 读取生成的 markets_list.txt
@@ -63,10 +91,27 @@ def run_scout():
         if os.path.exists('markets_list.txt'):
             with open('markets_list.txt', 'r', encoding='utf-8') as f:
                 markets_data = f.read()
+                
+            # [Debug Fix] 如果文件中显示 0 条记录，强制追加 stdout 中的调试日志
+            if "共计收录: 0 条记录" in markets_data:
+                 safe_output = (result.stdout or "") + "\n" + (result.stderr or "")
+                 markets_data += f"\n\n=== 🕵️‍♂️ 调试日志 (DEBUG LOGS) ===\n{safe_output}"
+        else:
+            # 如果文件不存在，说明脚本运行失败或没拿到数据
+            if result.returncode != 0:
+                # 安全获取 output
+                err_msg = result.stderr or "未知错误"
+                markets_data = f"❌ 脚本执行出错:\n{err_msg}"
+            else:
+                 # [Debug Fix] 如果没有结果，直接返回终端输出(stdout)，方便看到调试信息
+                 markets_data = f"⚠️ 未找到符合条件的市场 (Volume > {os.getenv('SCOUT_MIN_VOLUME', '?')})\n\n[终端调试日志]\n{safe_output}"
+        
+        # 安全拼接 output
+        safe_output = (result.stdout or "") + "\n" + (result.stderr or "")
         
         return jsonify({
             'success': True,
-            'output': result.stdout,
+            'output': safe_output,
             'markets': markets_data
         })
     except subprocess.TimeoutExpired:
@@ -74,12 +119,31 @@ def run_scout():
     except Exception as e:
         return jsonify({'success': False, 'message': f'执行失败: {str(e)}'}), 500
 
+
+# 简单的内存缓存
+TAGS_CACHE = {
+    'data': [],
+    'timestamp': 0
+}
+CACHE_DURATION = 3600  # 缓存 1 小时
+
 @app.route('/api/tags', methods=['GET'])
 def get_tags():
-    """获取所有可用的品类标签"""
+    """获取所有可用的品类标签 (带缓存)"""
+    global TAGS_CACHE
+    import time
+    
+    current_time = time.time()
+    
+    # 检查缓存是否有效
+    if TAGS_CACHE['data'] and (current_time - TAGS_CACHE['timestamp'] < CACHE_DURATION):
+        return jsonify(TAGS_CACHE['data'])
+
     try:
         import requests
-        response = requests.get('https://gamma-api.polymarket.com/tags?limit=5000', timeout=10)
+        # 增加超时时间，避免网络波动
+        response = requests.get('https://gamma-api.polymarket.com/tags?limit=5000', timeout=15)
+        response.raise_for_status() # 检查 HTTP 错误
         tags = response.json()
         
         # 过滤和排序标签
@@ -89,14 +153,42 @@ def get_tags():
             if t.get('label') and len(t.get('label', '')) < 30
         ]
         
-        # 按字母排序
-        filtered_tags.sort(key=lambda x: x['label'].lower())
+        # 定义优先展示的热门标签
+        PRIORITY_TAGS = ['Politics', 'Crypto', 'Sports', 'Business', 'Science', 'Pop Culture', 'News', 'Middle East', 'USA']
         
-        return jsonify(filtered_tags)
+        # 1. 分离出热门标签
+        priority_list = []
+        others_list = []
+        
+        for t in filtered_tags:
+            if t['label'] in PRIORITY_TAGS:
+                priority_list.append(t)
+            else:
+                others_list.append(t)
+                
+        # 2. 热门标签按预定义顺序排序
+        priority_list.sort(key=lambda x: PRIORITY_TAGS.index(x['label']) if x['label'] in PRIORITY_TAGS else 999)
+        
+        # 3. 其他标签按字母排序
+        others_list.sort(key=lambda x: str(x['label']).lower())
+        
+        # 合并
+        final_tags = priority_list + others_list
+        
+        # 更新缓存
+        TAGS_CACHE['data'] = final_tags
+        TAGS_CACHE['timestamp'] = current_time
+        
+        return jsonify(final_tags)
     except Exception as e:
-        return jsonify(filtered_tags)
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        print(f"❌ 获取标签失败: {e}")
+        # 如果有旧缓存，即使过期也返回，比报错好
+        if TAGS_CACHE['data']:
+            print("⚠️ 使用过期缓存")
+            return jsonify(TAGS_CACHE['data'])
+            
+        # 最后的手段：返回空列表，避免前端崩坏
+        return jsonify([])
 
 @app.route('/api/presets', methods=['GET'])
 def get_presets():
@@ -149,6 +241,27 @@ def save_preset():
         return jsonify({'success': True, 'message': '方案已保存'})
     except Exception as e:
         return jsonify({'success': False, 'message': f'保存失败: {str(e)}'}), 500
+
+@app.route('/api/test_webhook', methods=['POST'])
+def test_webhook():
+    data = request.json or {}
+    url = data.get('url')
+    if not url:
+        return jsonify({"success": False, "message": "URL不能为空"})
+    
+    try:
+        # 发送测试消息
+        payload = {
+            "content": "🔔 **Mikon AI Scout 通信测试**\n\n收到这条消息意味着 Webhook 配置成功！\nReady to dispatch intel.",
+            "username": "Mikon Scout Bot"
+        }
+        resp = requests.post(url, json=payload, timeout=5)
+        if resp.status_code in [200, 201, 204]:
+            return jsonify({"success": True})
+        else:
+            return jsonify({"success": False, "message": f"HTTP {resp.status_code}: {resp.text}"})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)})
 
 if __name__ == '__main__':
     print("🎯 Polymarket Scout Web 界面启动中...")

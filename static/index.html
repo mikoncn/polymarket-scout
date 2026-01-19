@@ -18,6 +18,7 @@
 
       <!-- 主内容区 -->
       <main class="main-content">
+        <div class="config-column">
         <!-- 配置面板 -->
         <section class="config-panel">
           <h2>⚙️ 侦察配置</h2>
@@ -67,16 +68,22 @@
 
               <div class="form-group">
                 <label for="tag">品类标签</label>
-                <input 
-                  type="text" 
-                  id="tag" 
-                  list="tagList" 
-                  placeholder="输入搜索或选择品类（留空=全局扫描）"
-                />
-                <datalist id="tagList">
-                  <option value="">全局扫描</option>
-                </datalist>
-                <span class="hint">定向侦察特定品类</span>
+                <div class="custom-select-wrapper" id="tagSelectWrapper">
+                    <div class="custom-select-trigger">
+                        <input 
+                          type="text" 
+                          id="tag" 
+                          placeholder="选择或搜索品类..." 
+                          autocomplete="off"
+                        />
+                        <span class="arrow">▼</span>
+                    </div>
+                    <ul class="custom-options" id="tagOptions">
+                        <li data-value="">全局扫描</li>
+                        <!-- 这里的选项将由 JS 动态加载 -->
+                    </ul>
+                </div>
+                <span class="hint">点击选择或输入搜索</span>
               </div>
             </div>
           </div>
@@ -131,19 +138,18 @@
                 </select>
                 <span class="hint">结果排序依据</span>
               </div>
-            </div>
-          </div>
-
-          <!-- 运行参数 -->
-          <div class="config-section">
-            <h3>运行参数</h3>
-            <div class="form-grid">
+              
               <div class="form-group">
-                <label for="fetchLimit">API 抓取上限</label>
-                <input type="number" id="fetchLimit" placeholder="200" />
-                <span class="hint">建议 100-500</span>
+                <label for="fetchLimit">扫描深度 (Limit)</label>
+                <input
+                  type="number"
+                  id="fetchLimit"
+                  placeholder="200"
+                  value="200"
+                />
+                <span class="hint">单次获取的市场数量 (狙击建议 2000+)</span>
               </div>
-
+              
               <div class="form-group">
                 <label for="runtimeLimit">运行限时（秒）</label>
                 <input type="number" id="runtimeLimit" placeholder="30" />
@@ -159,6 +165,34 @@
             <button id="resetBtn" class="btn btn-secondary">🔄 重置默认</button>
           </div>
         </section>
+
+        <!-- ⚡ 自动化与推送配置 -->
+        <section class="config-panel">
+            <h2>⚡ 自动化与推送</h2>
+            <div class="config-section">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="autoPreset">默认启动预设</label>
+                        <select id="autoPreset">
+                            <option value="">-- 跟随当前手动配置 --</option>
+                            <!-- 动态加载 -->
+                        </select>
+                        <span class="hint">一键启动时使用的配置</span>
+                    </div>
+
+                    <div class="form-group">
+                         <label for="webhookUrl">消息推送 (Webhook)</label>
+                         <input type="text" id="webhookUrl" placeholder="https://discord.com/api/webhooks/..." />
+                         <span class="hint">结果发送至 Discord/Slack/Telegram</span>
+                    </div>
+                </div>
+                <div class="action-buttons" style="margin-top: 1rem;">
+                    <button id="saveAutoBtn" class="btn btn-primary">💾 保存自动化配置</button>
+                    <button id="testWebhookBtn" class="btn btn-sm btn-secondary">🔔 测试推送</button>
+                </div>
+            </div>
+        </section>
+        </div>
 
         <!-- 结果展示区 -->
         <section class="results-panel">
@@ -181,6 +215,18 @@
     <div id="loadingOverlay" class="loading-overlay hidden">
       <div class="loading-spinner"></div>
       <p>侦察进行中...</p>
+    </div>
+
+    <!-- 新增：保存方案弹窗 (替代原生 prompt) -->
+    <div id="savePresetModal" class="loading-overlay hidden" style="background: rgba(0,0,0,0.8);">
+        <div class="modal-box" style="background: #1e1e1e; padding: 2rem; border-radius: 12px; border: 1px solid #333; min-width: 300px; text-align: center;">
+            <h3 style="margin-bottom: 1.5rem; color: #fff;">💾 另存为新方案</h3>
+            <input type="text" id="newPresetName" placeholder="输入方案名称..." style="width: 100%; padding: 0.8rem; margin-bottom: 1.5rem; background: #2d2d2d; border: 1px solid #444; color: #fff; border-radius: 6px;">
+            <div style="display: flex; gap: 1rem; justify-content: center;">
+                <button id="cancelPresetBtn" class="btn btn-secondary">取消</button>
+                <button id="confirmPresetBtn" class="btn btn-primary">确认保存</button>
+            </div>
+        </div>
     </div>
 
     <!-- 通知提示 -->
